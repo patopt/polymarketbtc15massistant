@@ -46,7 +46,7 @@ function json(res, data, status = 200) { res.writeHead(status, { "Content-Type":
 async function body(req) { let s = ""; for await (const chunk of req) s += chunk; return s ? JSON.parse(s) : {}; }
 function verify(value) { try { const u = new URL(value); return ["http:", "https:", "ws:", "wss:"].includes(u.protocol); } catch { return false; } }
 
-const server = http.createServer(async (req, res) => {
+export async function handler(req, res) {
   const url = new URL(req.url, `http://${req.headers.host}`);
   if (url.pathname === "/api/state") return json(res, snapshot());
   if (url.pathname === "/api/events") { res.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-cache", Connection: "keep-alive" }); res.write(`data: ${JSON.stringify(snapshot())}\n\n`); clients.add(res); req.on("close", () => clients.delete(res)); return; }
