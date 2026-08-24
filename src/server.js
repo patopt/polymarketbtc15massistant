@@ -27,7 +27,17 @@ function tick() {
   state.modelUp = Math.max(0.1, Math.min(0.9, state.modelUp + (Math.random() - 0.48) * 0.02)); state.modelDown = 1 - state.modelUp;
   state.timeLeft = state.timeLeft <= 0 ? 899 : state.timeLeft - 1;
   state.signal = decide({ remainingMinutes: state.timeLeft / 60, edgeUp: state.modelUp - state.up, edgeDown: state.modelDown - state.down, modelUp: state.modelUp, modelDown: state.modelDown });
-  if (state.position) { state.portfolio.exposure = state.position.size; state.portfolio.pnl = (state.up - state.position.entry) * state.position.size; }
+  if (state.signal.side && !state.position && state.signal.action === "ENTER") {
+    state.position = { side: state.signal.side, size: state.config.positionSize, entry: state.signal.side === "UP" ? state.up : state.down, openedAt: new Date().toISOString() };
+    state.portfolio.exposure = state.config.positionSize;
+    state.portfolio.trades += 1;
+    log(`Entrée simulée ${state.signal.side} · ${state.config.positionSize}%`);
+  }
+  if (state.position) {
+    const current = state.position.side === "UP" ? state.up : state.down;
+    state.portfolio.exposure = state.position.size;
+    state.portfolio.pnl = (current - state.position.entry) * state.position.size * state.portfolio.initial;
+  }
   broadcast();
 }
 setInterval(tick, 1000);
