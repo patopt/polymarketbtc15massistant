@@ -54,5 +54,9 @@ export async function handler(req, res) {
   if (url.pathname === "/api/config" && req.method === "POST") { const data = await body(req); const c = { ...state.config, ...data }; if (!Number.isFinite(Number(c.capital)) || Number(c.capital) < 100 || Number(c.capital) > 10000000) return json(res, { error: "Capital entre 100 et 10 000 000 requis." }, 400); state.config = { ...c, capital: Number(c.capital) }; if (!state.running) state.portfolio.initial = state.config.capital; log("Configuration démo mise à jour"); broadcast(); return json(res, snapshot()); }
   if (url.pathname === "/api/verify" && req.method === "POST") { const data = await body(req); const ok = verify(data.url); return json(res, { ok, latency: ok ? Math.floor(40 + Math.random() * 160) : null, message: ok ? "URL valide et joignable en simulation" : "URL invalide" }); }
   const file = url.pathname === "/" ? "index.html" : url.pathname.slice(1); const filePath = path.resolve(publicDir, file); if (!filePath.startsWith(publicDir)) return json(res, { error: "Forbidden" }, 403); fs.readFile(filePath, (err, content) => { if (err) return json(res, { error: "Not found" }, 404); const type = file.endsWith(".css") ? "text/css" : file.endsWith(".js") ? "text/javascript" : "text/html"; res.writeHead(200, { "Content-Type": type }); res.end(content); });
-});
-server.listen(process.env.PORT || 3000, () => console.log("[v0] Dashboard démo sur http://localhost:" + (process.env.PORT || 3000)));
+}
+
+if (process.env.VERCEL !== "1") {
+  const server = http.createServer(handler);
+  server.listen(process.env.PORT || 3000, () => console.log("[v0] Dashboard démo sur http://localhost:" + (process.env.PORT || 3000)));
+}
